@@ -10,27 +10,27 @@
 # This starting point is the lab's network without r3. It works, but it doesn't meet the
 # assignment's requirements: that's your job.
 
-student_id_last4: "NNNN"
+student_id_last4: "2206"
 
 routers: [r1, r2]
 
 lans:
   - name: lan-h1
-    network: 10.NN.1.0/24
+    network: 10.6.1.0/24
     router: r1
     host: h1
   - name: lan-h2
-    network: 10.NN.32.0/24
+    network: 10.6.32.0/24
     router: r2
     host: h2
 
 links:
-  - [r1, r2, 10.NN.12.0/30]
+  - [r1, r2, 10.6.12.0/30]
 
 routes:
   r1:
-    - to: 10.NN.32.0/24
-      via: 10.NN.12.2
+    - to: 10.6.32.0/24
+      via: 10.6.12.2
   r2:
-    - to: 10.NN.1.0/24
-      via: 10.NN.12.1
+    - to: 10.6.1.0/24
+      via: 10.6.12.1
