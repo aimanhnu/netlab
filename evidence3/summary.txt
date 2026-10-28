@@ -1,0 +1,4 @@
+10.6.32.10 via 10.6.14.2 dev r1-eth2 src 10.6.14.1 uid 0 
+    cache 
+10.6.33.10 via 10.6.14.2 dev r1-eth2 src 10.6.14.1 uid 0 
+    cache 
