@@ -2,18 +2,35 @@
 # A few sentences each, in your own words, about YOUR network and YOUR evidence.
 # Leave a blank line between paragraphs. Never put your name or full student ID here.
 
-repository: https://github.com/YOUR-USERNAME/YOUR-REPOSITORY
+# page3.yaml: the words on my Week 3 page.
+
+repository: https://github.com/aimanhnu/netlab
 
 answers:
   design:
     question: "Describe your design: why these routers, LANs and links, and how you chose the addresses."
-    answer: ""
+    answer: |
+      My network has four routers joined in a square (r1-r2-r3-r4-r1), so every pair of routers has two ways to reach each other. That loop of links is the redundant path. r1 and r2 each have one LAN (h1 and h2), r3 has two LANs (h3 and h4), and r4 has no LAN: it is a transit router on the other side of the square.
+
+      All addresses come from my block 10.6.0.0/16. Each link is a /30, which gives exactly two usable addresses, one per router, and I named each link after the routers it joins (r1-r2 is 10.6.12.0/30, r3-r4 is 10.6.34.0/30, and so on) so I can tell from an address which link it belongs to. I deliberately put h3 and h4 on 10.6.32.0/24 and 10.6.33.0/24: 32 is even and the two are next to each other, so they can be covered by one summary route.
+
   summary:
     question: "Which route summarises several LANs? Which networks does it cover, why is it correct, and what else would it attract if you added a network inside its range?"
-    answer: ""
+    answer: |
+      10.6.32.0/23 summarises h3's LAN (10.6.32.0/24) and h4's LAN (10.6.33.0/24). r1, r2 and r4 all use it instead of two separate /24 routes. In binary, 32 is 00100000 and 33 is 00100001: they share the first 7 bits of the third byte, so 16 + 7 = 23 bits in common. Two networks, contiguous, starting on an even number, so the /23 covers exactly these two and nothing else. My summary.txt shows it working: r1 sends both 10.6.32.10 and 10.6.33.10 via 10.6.14.2.
+
+      A summary attracts every address in its range, whether a network exists there or not. If I added a new network anywhere in 10.6.32.0 to 10.6.33.255 but attached it to a different router, say r2, then r1 and r4 would still send its traffic towards r3, because the /23 matches it. To fix that I would need a more specific route to the new network, which would win by longest-prefix match.
+
   failure:
     question: "When you took a link down, what happened, and why couldn't your routes recover even though another path existed? What would have recovered?"
-    answer: ""
+    answer: |
+      I took the r1-r4 link down and traced from h1 to h3 again. The trace stopped at r1 with !N, and r1 ip route get 10.6.32.10 said "Network is unreachable". r1's only route to h3's network was 10.6.32.0/23 via 10.6.14.2, which uses the interface that went down, so Linux stopped using that route and r1 had nothing left that matched.
+
+      The path r1 -> r2 -> r3 was still working, but no route told r1 to use it. Static routes are fixed: nobody recalculates them when a link fails. A routing protocol such as OSPF would have recovered, because the routers would notice the failed link and work out new routes through r2 by themselves. A simpler fix would be a backup static route with a higher metric, for example 10.6.32.0/23 via 10.6.12.2 on r1 (and a matching one on r3 for the return path to h1).
+
   control_plane:
     question: "In your network, what was the control plane? Who worked out the routes, and what does that mean for a network of 40 routers?"
-    answer: ""
+    answer: |
+      In my network I was the control plane. I worked out every route by hand and wrote it in network.yaml, check_paths() checked them for loops and missing routes, and build_routed.py installed them on the routers. The routers themselves only forwarded packets using the tables I gave them: they never talked to each other or learned anything.
+
+      That worked for 4 routers and 9 routes, but it does not scale. With 40 routers, every router needs a route to every LAN, so there would be hundreds of routes to write and keep correct, and any link failure would mean recalculating them by hand, as my failure test showed. A real network of that size needs an automatic control plane: a routing protocol like OSPF running on every router, or a central SDN controller that computes routes and installs them, which is where the course goes next.
